@@ -9,6 +9,7 @@ class SVM(object):
         '''
         self.k=k
     def selectI(self):#选择第一个变量
+
         pass
     def selectJRandom(self,i,m):#
         j=i
@@ -16,10 +17,9 @@ class SVM(object):
             j=int(rd.uniform(0,m))
         return j
     def selectJ(self):#选择第二个变量使得Ej-Ei最大
+        #偷个懒，不缓存E了
+
         pass
-    def calE(self,x,y,i,a,b):
-        k=self.k
-        return np.dot(a,np.multiply(y,k(x,x[i])))+b-y[i]
     def fit(self,x,y,c):
         '''
 
@@ -29,6 +29,7 @@ class SVM(object):
         '''
         k=self.k
         m,n=np.shape(x)
+        self.ecache=np.zeros(m)
         #先通过smo算出a
         #选择两个优化alpha
         a=np.zeros(m)
@@ -36,42 +37,44 @@ class SVM(object):
         #下面迭代优化
         for i in range(5000):
             #选两个优化的alpha
-            i=self.selectI(a)
-            j=self.selectJ(a)
-            eta=k(a[i],a[i])+k(a[j],a[j])-2*k(a[i],a[j])
+            for i in range(m):
+                if i>0 and i<c:#TODO heuristic ??????
+                    # i=self.selectI(a)
+                    j=self.selectJ(a,i)
+                    eta=k(a[i],a[i])+k(a[j],a[j])-2*k(a[i],a[j])
 
-            #计算ei，ej
+                    #计算ei，ej
 
-            ei=np.dot(a,np.multiply(y,k(x,x[i])))+b-y[i]
-            ej=np.dot(a,np.multiply(y,k(x,x[i])))+b-y[j]
-            #更新ai
-            aiold=a[i].copy()
-            ajold=a[j].copy()
-            ainew=a[i]+y[i]*(ej-ei)/eta
-            #计算a的L,H
-            if y[i]*y[j]<=0:
-                L=np.max(0,np.abs(a[i]-a[j]),0)
-                H=np.min(c,np.abs(c-a[i]+a[j]))
-            else:
-                L=np.max(0,np.abs(a[i]+a[j]-c))
-                H=np.min(c,np.abs(a[i]+a[j]))
-            if ainew>H:
-                ainew=H
-            if ainew<L:
-                ainew=L
-            #更新a[j]
-            ajnew=ajold+aiold-ainew
-            a[i]=ainew#这里可以判断是否有更新，如果n轮没有更新的话可以提前终止迭代,
-            a[j]=ajnew
-            #下面更新b，更新b的时候利用求出的e 简化运算
-            bj=y[j]*(ajold-ajnew)*k(x[j],x[j])+y[i](aiold-ainew)*k(x[i],x[j])-b-ej
-            bi=y[i]*(aiold-ainew)*k(x[i],x[i])+y[j][ajold-ajnew]*k(x[j],x[i])-b-ei
-            if c>ainew>0:
-                b=bi
-            elif c>ajnew>0:
-                b=bj
-            else:
-                b=(bi+bj)/2
+                    ei=np.dot(a,np.multiply(y,k(x,x[i])))+b-y[i]
+                    ej=np.dot(a,np.multiply(y,k(x,x[i])))+b-y[j]
+                    #更新ai
+                    aiold=a[i].copy()
+                    ajold=a[j].copy()
+                    ainew=a[i]+y[i]*(ej-ei)/eta
+                    #计算a的L,H
+                    if y[i]*y[j]<=0:
+                        L=np.max(0,np.abs(a[i]-a[j]),0)
+                        H=np.min(c,np.abs(c-a[i]+a[j]))
+                    else:
+                        L=np.max(0,np.abs(a[i]+a[j]-c))
+                        H=np.min(c,np.abs(a[i]+a[j]))
+                    if ainew>H:
+                        ainew=H
+                    if ainew<L:
+                        ainew=L
+                    #更新a[j]
+                    ajnew=ajold+aiold-ainew
+                    a[i]=ainew#这里可以判断是否有更新，如果n轮没有更新的话可以提前终止迭代,
+                    a[j]=ajnew
+                    #下面更新b，更新b的时候利用求出的e 简化运算
+                    bj=y[j]*(ajold-ajnew)*k(x[j],x[j])+y[i](aiold-ainew)*k(x[i],x[j])-b-ej
+                    bi=y[i]*(aiold-ainew)*k(x[i],x[i])+y[j][ajold-ajnew]*k(x[j],x[i])-b-ei
+                    if c>ainew>0:
+                        b=bi
+                    elif c>ajnew>0:
+                        b=bj
+                    else:
+                        b=(bi+bj)/2
 
         #一轮迭代结束
         #发现用非线性核的话，这个w暂时我没有找到方法求，（如果线性可以根据w的偏导求），暂时存支撑向量
