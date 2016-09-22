@@ -3,23 +3,24 @@ import numpy as np
 import random as rd
 
 class SVM(object):
-    def __init__(self,k=(lambda a,b:a*b)):
+    def __init__(self,k=(lambda a,b:a*b),lin=True):
         '''
         k:核函数
         '''
         self.k=k
-    def selectI(self):#选择第一个变量
-
-        pass
+        self.lin=lin
+    # def selectI(self):#选择第一个变量
+    #
+    #     pass
     def selectJRandom(self,i,m):#
         j=i
         while j==i:
             j=int(rd.uniform(0,m))
         return j
-    def selectJ(self):#选择第二个变量使得Ej-Ei最大
-        #偷个懒，不缓存E了
+    def selectJ(self,x,y,a,b):#选择第二个变量使得Ej-Ei最大
 
         pass
+
     def fit(self,x,y,c):
         '''
 
@@ -29,7 +30,8 @@ class SVM(object):
         '''
         k=self.k
         m,n=np.shape(x)
-        self.ecache=np.zeros(m)
+        #算E
+        self.ecache=np.zeros((m,2))
         #先通过smo算出a
         #选择两个优化alpha
         a=np.zeros(m)
@@ -40,7 +42,7 @@ class SVM(object):
             for i in range(m):
                 if i>0 and i<c:#TODO heuristic ??????
                     # i=self.selectI(a)
-                    j=self.selectJ(a,i)
+                    j=self.selectJRandom(i,m)#self.selectJ(a,i)
                     eta=k(a[i],a[i])+k(a[j],a[j])-2*k(a[i],a[j])
 
                     #计算ei，ej
@@ -75,9 +77,20 @@ class SVM(object):
                         b=bj
                     else:
                         b=(bi+bj)/2
-
+        self.b=b
         #一轮迭代结束
         #发现用非线性核的话，这个w暂时我没有找到方法求，（如果线性可以根据w的偏导求），暂时存支撑向量
-        self.a=a[a!=0]
-        self.x=x[a!=0,:]
-        self.y=y[a!=0]
+        if self.lin:
+            self.w=np.dot(self.lin(x),np.multiply(a,y))
+        else:
+            self.a=a[a!=0]
+            self.x=x[a!=0,:]
+            self.y=y[a!=0]
+
+    def predict(self,v):
+        val=0
+        if self.k:
+           val= np.dot(self.a,np.multiply(self.y,self.k(self.x,v)))+self.b
+        else:
+            val=np.dot(self.w,v)+b
+        return val
