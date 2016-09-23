@@ -21,7 +21,13 @@ class Adaboost(object):
         y[y>0]=1
         y[y<=0]=-1
         return y
-    def train(self,x,y,numit,minerr=1e-10):
+    def train(self,x,y,numit,shrinkage=1):
+        '''
+        x,数据
+        y,标签，
+        numit,迭代次数
+        shrinkage
+        '''
         m,n = np.shape(x)
         #初始化第一次权重
         wei=np.ones((m,1))/float(m)
@@ -29,11 +35,13 @@ class Adaboost(object):
         db=ds.DecisionStumpBuilder()
         for i in range(numit):
             stump,est,err=db.buildStump(x,y,wei,20)#stump
+            if err>.5:
+                print "error"
             alpha=float(0.5*np.log((1-err)/np.max(err,1e-20)))
+            alpha=alpha*shrinkage
             #更新权重w(t+1)=w(t)*当前指数错误
             #指数错误
             experr=np.exp(np.multiply(-1*alpha*np.mat(y),est.T))
-            print experr[:,:5]
             wei=np.multiply(wei.reshape(-1,1),experr.reshape(-1,1))
             stump['alpha']=alpha
             self.alphas.append(alpha)

@@ -14,7 +14,7 @@ y[y==0]=-1
 
 
 clf=Adaboost.Adaboost()
-clf.train(x,y,500)
+clf.train(x,y,500,0.1)
 
 plot_colors = "br"
 plot_step = 0.02

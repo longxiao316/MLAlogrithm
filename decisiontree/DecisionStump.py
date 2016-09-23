@@ -18,7 +18,7 @@ class DecisionStumpBuilder(Classifier):
         y=y.reshape(-1,1)
         err[x==y]=0
         weightederr=err.T*wei
-        return np.sum(weightederr)
+        return float(weightederr)
     def predict(self,x,stump):
         threshold=stump['threshold']
         ine=stump['ineq']
